@@ -1,9 +1,11 @@
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 
 import { env } from './config/env.js';
+import authRoutes from './modules/auth/auth.routes.js';
 
 const app = express();
 
@@ -22,6 +24,26 @@ app.get('/health', (_req, res) => {
     success: true,
     application: 'Duely API',
     status: 'UP'
+  });
+});
+
+app.use('/api/auth', authRoutes);
+
+// Manejo centralizado de errores
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (error instanceof Error && error.name === 'ZodError') {
+    res.status(400).json({
+      success: false,
+      message: 'Datos de entrada inválidos'
+    });
+    return;
+  }
+
+  console.error(error);
+
+  res.status(500).json({
+    success: false,
+    message: 'Error interno del servidor'
   });
 });
 
