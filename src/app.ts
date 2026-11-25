@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import { env } from './config/env.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import importsRoutes from './modules/imports/imports.routes.js';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/imports', importsRoutes);
 
 // Manejo centralizado de errores
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
