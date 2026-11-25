@@ -1,4 +1,8 @@
-export interface CustomerImport {
+export interface ImportRow {
+  rowNumber: number;
+}
+
+export interface CustomerImport extends ImportRow {
   code: string;
   firstNames: string;
   lastNames: string;
@@ -7,7 +11,7 @@ export interface CustomerImport {
   address?: string;
 }
 
-export interface LoanImport {
+export interface LoanImport extends ImportRow {
   code: string;
   customerCode: string;
   principalAmount: number;
@@ -21,20 +25,20 @@ export interface LoanImport {
   observations?: string;
 }
 
-export interface UserImport {
+export interface UserImport extends ImportRow {
   email: string;
   fullName: string;
   role: string;
   reportsToEmail?: string;
 }
 
-export interface AssignmentImport {
+export interface AssignmentImport extends ImportRow {
   customerCode: string;
   assignedToEmail: string;
   supervisorEmail?: string;
 }
 
-export interface CollectionDayImport {
+export interface CollectionDayImport extends ImportRow {
   loanCode: string;
   dayType: string;
   dayValue: string | number;
@@ -46,4 +50,24 @@ export interface ImportData {
   users: UserImport[];
   assignments: AssignmentImport[];
   collectionDays: CollectionDayImport[];
+}
+
+export interface ImportError {
+  sheet: string;
+  row: number;
+  field: string;
+  message: string;
+}
+
+export interface ImportValidationResult {
+  valid: boolean;
+  summary: {
+    customers: number;
+    loans: number;
+    users: number;
+    assignments: number;
+    collectionDays: number;
+    errors: number;
+  };
+  errors: ImportError[];
 }

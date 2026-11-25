@@ -8,7 +8,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed:admins": "tsx src/scripts/seed-admins.ts"
+    "seed:admins": "tsx src/scripts/seed-admins.ts",
+    "user:create": "tsx src/scripts/create-user.ts"
   },
   "repository": {
     "type": "git",

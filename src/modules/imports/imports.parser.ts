@@ -83,6 +83,7 @@ export async function parseImportFile(
     if (!code) return;
 
     customers.push({
+      rowNumber,
       code,
       firstNames: getValue(row, 2),
       lastNames: getValue(row, 3),
@@ -102,6 +103,7 @@ export async function parseImportFile(
     if (!code) return;
 
     loans.push({
+      rowNumber,
       code,
       customerCode: getValue(row, 2),
       principalAmount: getNumber(row, 3),
@@ -126,6 +128,7 @@ export async function parseImportFile(
     if (!email) return;
 
     users.push({
+      rowNumber,
       email: email.toLowerCase(),
       fullName: getValue(row, 2),
       role: getValue(row, 3).toUpperCase(),
@@ -143,6 +146,7 @@ export async function parseImportFile(
     if (!customerCode) return;
 
     assignments.push({
+      rowNumber,
       customerCode,
       assignedToEmail: getValue(row, 2).toLowerCase(),
       supervisorEmail: getValue(row, 3).toLowerCase() || undefined
@@ -159,6 +163,7 @@ export async function parseImportFile(
     if (!loanCode) return;
 
     collectionDays.push({
+      rowNumber,
       loanCode,
       dayType: getValue(row, 2).toUpperCase(),
       dayValue: getValue(row, 3).toUpperCase()
