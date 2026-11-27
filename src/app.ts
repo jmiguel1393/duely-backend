@@ -9,6 +9,7 @@ import authRoutes from './modules/auth/auth.routes.js';
 import importsRoutes from './modules/imports/imports.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import customersRoutes from './modules/customers/customers.routes.js';
+import loansRoutes from './modules/loans/loans.routes.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/imports', importsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/customers', customersRoutes);
+app.use('/api/loans', loansRoutes);
 
 // Manejo centralizado de errores
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

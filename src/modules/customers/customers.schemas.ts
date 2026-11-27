@@ -25,7 +25,8 @@ const positiveInteger = z.string().regex(/^[1-9]\d*$/).transform(Number);
 export const listCustomersSchema = z.object({
   page: positiveInteger.pipe(z.number().int().max(1000000)).default(1),
   limit: positiveInteger.pipe(z.number().int().max(100)).default(20),
-  search: z.string().trim().max(180).optional()
+  search: z.string().trim().max(180).optional(),
+  withoutLoan: z.enum(['true', 'false']).transform(value => value === 'true').default(false)
 }).strict();
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;

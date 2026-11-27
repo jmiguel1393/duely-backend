@@ -26,6 +26,9 @@ test('customers CRUD stays within the authenticated company', async () => {
       ON COMMIT DROP`);
     await client.query(`ALTER TABLE customers ADD CONSTRAINT uq_customers_company_code
       UNIQUE (company_id, code)`);
+    await client.query(`CREATE TEMP TABLE loans (
+      company_id uuid NOT NULL, customer_id uuid NOT NULL, status text NOT NULL
+    ) ON COMMIT DROP`);
 
     pool.query = async (query, values) => {
       if (typeof query === 'string' && query.includes('FROM auth_sessions s')) {
@@ -82,6 +85,25 @@ test('customers CRUD stays within the authenticated company', async () => {
     });
     assert.equal(secondResponse.status, 201);
     const second = (await secondResponse.json()).data;
+    await client.query(`INSERT INTO loans (company_id, customer_id, status)
+      VALUES ($1, $2, 'ACTIVE'), ($3, $4, 'ACTIVE')`,
+    [companyId, created.id, otherCompanyId, second.id]);
+    const withoutLoan = await request('?withoutLoan=true&search=ana&page=1&limit=1', 'GET', companyToken);
+    const withoutLoanBody = await withoutLoan.json();
+    assert.deepEqual(withoutLoanBody.data.map(customer => customer.id), [second.id]);
+    assert.deepEqual(withoutLoanBody.pagination, { page: 1, limit: 1, total: 1, totalPages: 1 });
+    for (const loanStatus of ['PAID', 'CANCELLED', 'OVERDUE', 'PENDING_DISBURSEMENT']) {
+      await client.query('UPDATE loans SET status = $1 WHERE company_id = $2 AND customer_id = $3',
+        [loanStatus, companyId, created.id]);
+      const filtered = await request('?withoutLoan=true', 'GET', companyToken);
+      assert.deepEqual((await filtered.json()).data.map(customer => customer.id), [second.id]);
+    }
+    const unfiltered = await request('?withoutLoan=false', 'GET', companyToken);
+    assert.equal((await unfiltered.json()).pagination.total, 2);
+    const noEligible = await request('?withoutLoan=true&search=cli-test', 'GET', companyToken);
+    assert.deepEqual((await noEligible.json()).data, []);
+    assert.equal((await request('?withoutLoan=yes', 'GET', companyToken)).status, 400);
+    assert.equal((await request('?withoutLoan=true&withoutLoan=false', 'GET', companyToken)).status, 400);
     const firstPage = await request('?page=1&limit=1', 'GET', companyToken);
     const firstPageBody = await firstPage.json();
     assert.equal(firstPageBody.data.length, 1);

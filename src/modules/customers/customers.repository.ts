@@ -14,6 +14,11 @@ export async function listCustomers(companyId: string, input: ListCustomersInput
             AND ($2::text = '' OR POSITION(LOWER($2) IN LOWER(code)) > 0
               OR POSITION(LOWER($2) IN LOWER(first_names || ' ' || last_names)) > 0
               OR POSITION(LOWER($2) IN LOWER(COALESCE(business_name, ''))) > 0)
+         AND (NOT $5::boolean OR NOT EXISTS (
+           SELECT 1 FROM loans
+           WHERE loans.company_id = customers.company_id
+             AND loans.customer_id = customers.id
+         ))
      )
      SELECT page.*, counts.total
      FROM (SELECT COUNT(*)::text AS total FROM filtered) counts
@@ -23,7 +28,7 @@ export async function listCustomers(companyId: string, input: ListCustomersInput
       LIMIT $3 OFFSET $4
      ) page ON TRUE
      ORDER BY page."createdAt" DESC, page.id`,
-    [companyId, input.search ?? '', input.limit, (input.page - 1) * input.limit]
+    [companyId, input.search ?? '', input.limit, (input.page - 1) * input.limit, input.withoutLoan]
   );
   const total = Number(result.rows[0].total);
   const data = result.rows
