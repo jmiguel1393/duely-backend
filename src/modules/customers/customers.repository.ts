@@ -19,21 +19,33 @@ export async function listCustomers(companyId: string, input: ListCustomersInput
            WHERE loans.company_id = customers.company_id
              AND loans.customer_id = customers.id
          ))
+     ), paged AS (
+       SELECT * FROM filtered
+       ORDER BY created_at DESC, id
+       LIMIT $3 OFFSET $4
+     ), loan_counts AS (
+       SELECT loans.customer_id, COUNT(*)::text AS count
+       FROM loans
+       INNER JOIN paged ON paged.company_id = loans.company_id
+         AND paged.id = loans.customer_id
+       GROUP BY loans.customer_id
      )
-     SELECT page.*, counts.total
+     SELECT page.*, counts.total, COALESCE(loan_counts.count, '0') AS "loansCount"
      FROM (SELECT COUNT(*)::text AS total FROM filtered) counts
      LEFT JOIN LATERAL (
-       SELECT ${customerColumns} FROM filtered
-       ORDER BY created_at DESC, id
-      LIMIT $3 OFFSET $4
+       SELECT ${customerColumns} FROM paged
      ) page ON TRUE
+     LEFT JOIN loan_counts ON loan_counts.customer_id = page.id
      ORDER BY page."createdAt" DESC, page.id`,
     [companyId, input.search ?? '', input.limit, (input.page - 1) * input.limit, input.withoutLoan]
   );
   const total = Number(result.rows[0].total);
   const data = result.rows
     .filter(row => row.id !== null)
-    .map(({ total: _total, ...customer }) => customer);
+    .map(({ total: _total, loansCount, ...customer }) => ({
+      ...customer,
+      loansCount: Number(loansCount)
+    }));
   return {
     data,
     pagination: {

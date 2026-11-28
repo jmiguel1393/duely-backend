@@ -114,7 +114,7 @@ export async function confirmImportBatch(
 
     if (existingCustomers.rowCount) {
       throw new Error(
-        'Uno o más códigos de cliente ya existen. Genera una nueva previsualización.'
+        'Uno o más documentos de cliente ya existen. Genera una nueva previsualización.'
       );
     }
 
@@ -128,7 +128,7 @@ export async function confirmImportBatch(
 
     if (existingLoans.rowCount) {
       throw new Error(
-        'Uno o más códigos de préstamo ya existen. Genera una nueva previsualización.'
+        'Uno o más documentos de préstamo ya existen. Genera una nueva previsualización.'
       );
     }
 

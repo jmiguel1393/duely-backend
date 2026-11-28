@@ -65,10 +65,10 @@ function validateInternalData(data: ImportData): ImportError[] {
 
     if (!code) {
       addError(errors, 'Clientes', customer.rowNumber, 'cliente_codigo',
-        'El código del cliente es obligatorio.');
+        'El documento del cliente es obligatorio.');
     } else if (customerCodes.has(code)) {
       addError(errors, 'Clientes', customer.rowNumber, 'cliente_codigo',
-        `Código duplicado. También aparece en la fila ${customerCodes.get(code)}.`);
+        `Documento duplicado. También aparece en la fila ${customerCodes.get(code)}.`);
     } else {
       customerCodes.set(code, customer.rowNumber);
     }
@@ -311,7 +311,7 @@ async function validateDatabaseData(
         'Clientes',
         customer.rowNumber,
         'cliente_codigo',
-        'Ya existe un cliente con este código en Duely.'
+        'Ya existe un cliente con este documento en Duely.'
       );
     }
   }

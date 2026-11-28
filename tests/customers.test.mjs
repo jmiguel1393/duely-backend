@@ -91,6 +91,7 @@ test('customers CRUD stays within the authenticated company', async () => {
     const withoutLoan = await request('?withoutLoan=true&search=ana&page=1&limit=1', 'GET', companyToken);
     const withoutLoanBody = await withoutLoan.json();
     assert.deepEqual(withoutLoanBody.data.map(customer => customer.id), [second.id]);
+    assert.equal(withoutLoanBody.data[0].loansCount, 0);
     assert.deepEqual(withoutLoanBody.pagination, { page: 1, limit: 1, total: 1, totalPages: 1 });
     for (const loanStatus of ['PAID', 'CANCELLED', 'OVERDUE', 'PENDING_DISBURSEMENT']) {
       await client.query('UPDATE loans SET status = $1 WHERE company_id = $2 AND customer_id = $3',
@@ -98,8 +99,13 @@ test('customers CRUD stays within the authenticated company', async () => {
       const filtered = await request('?withoutLoan=true', 'GET', companyToken);
       assert.deepEqual((await filtered.json()).data.map(customer => customer.id), [second.id]);
     }
+    await client.query(`INSERT INTO loans (company_id, customer_id, status)
+      VALUES ($1, $2, 'PAID'), ($1, $2, 'CANCELLED')`, [companyId, created.id]);
     const unfiltered = await request('?withoutLoan=false', 'GET', companyToken);
-    assert.equal((await unfiltered.json()).pagination.total, 2);
+    const unfilteredBody = await unfiltered.json();
+    assert.equal(unfilteredBody.pagination.total, 2);
+    assert.equal(unfilteredBody.data.find(customer => customer.id === created.id).loansCount, 3);
+    assert.equal(unfilteredBody.data.find(customer => customer.id === second.id).loansCount, 0);
     const noEligible = await request('?withoutLoan=true&search=cli-test', 'GET', companyToken);
     assert.deepEqual((await noEligible.json()).data, []);
     assert.equal((await request('?withoutLoan=yes', 'GET', companyToken)).status, 400);
@@ -112,6 +118,7 @@ test('customers CRUD stays within the authenticated company', async () => {
     const secondPageBody = await secondPage.json();
     assert.equal(secondPageBody.data.length, 1);
     assert.notEqual(firstPageBody.data[0].id, secondPageBody.data[0].id);
+    assert.deepEqual([firstPageBody.data[0].loansCount, secondPageBody.data[0].loansCount].sort(), [0, 3]);
     const emptyPage = await request('?page=3&limit=1', 'GET', companyToken);
     assert.deepEqual((await emptyPage.json()).pagination, { page: 3, limit: 1, total: 2, totalPages: 2 });
 
@@ -136,7 +143,9 @@ test('customers CRUD stays within the authenticated company', async () => {
     }
 
     const otherList = await request('', 'GET', otherToken);
-    assert.equal((await otherList.json()).data.length, 1);
+    const otherListBody = await otherList.json();
+    assert.equal(otherListBody.data.length, 1);
+    assert.equal(otherListBody.data[0].loansCount, 0);
     const otherSearch = await request('?search=otro', 'GET', otherToken);
     assert.equal((await otherSearch.json()).pagination.total, 0);
     assert.equal((await request(`/${created.id}`, 'PATCH', otherToken, { phone: '1' })).status, 404);
